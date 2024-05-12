@@ -9,8 +9,8 @@ from routers.articles import article_router
 app = FastAPI(title="Control Stock API", version="0.1",
               description="API para ingreso y salidad de productos en un stock")
 
-app.include_router(category_router)
-app.include_router(article_router)
+app.include_router(category_router, prefix="/api/v1")
+app.include_router(article_router, prefix="/api/v1")
 
 
 @app.get("/")
