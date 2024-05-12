@@ -1,13 +1,15 @@
+import uuid
 from datetime import datetime
 from typing import Optional
 
 from sqlmodel import Field, SQLModel
+from .categories import Category
 
 
 class Article(SQLModel, table=True):
     __tablename__ = "articles"
 
-    id: int = Field(default=None, primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True, nullable=False)
     name: str
     code: str
     units: int
@@ -18,3 +20,7 @@ class Article(SQLModel, table=True):
     deleted_at: Optional[datetime] = None
 
     category_id: int | None = Field(default=None, foreign_key="categories.id")
+
+
+class ArticleWithCategory(Article):
+    category: Category | None = None
