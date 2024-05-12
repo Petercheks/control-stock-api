@@ -14,12 +14,12 @@ def get_session():
         yield session
 
 
-@category_router.get("/", response_model=list[CategoryBase])
+@category_router.get("/", response_model=list[CategoryBase], status_code=200)
 async def get_categories(*, session: Session = Depends(get_session), offset: int = 0, limit: int = 100):
     return session.exec(select(Category).offset(offset).limit(limit)).all()
 
 
-@category_router.get("/{id}", response_model=CategoryBase)
+@category_router.get("/{id}", response_model=CategoryBase, status_code=200)
 async def get_category(*, session: Session = Depends(get_session), id: uuid.UUID):
     category = session.get(Category, id)
     if not category:
@@ -27,16 +27,16 @@ async def get_category(*, session: Session = Depends(get_session), id: uuid.UUID
     return category
 
 
-@category_router.post("/", response_model=CategoryBase)
-def create_category(*, session: Session = Depends(get_session), category: CategoryCreate):
-    db_category = Category.model_validate(category)
+@category_router.post("/", response_model=CategoryBase, status_code=201)
+async def create_category(*, session: Session = Depends(get_session), category: CategoryCreate):
+    db_category = Category(**category.dict())
     session.add(db_category)
     session.commit()
     session.refresh(db_category)
     return db_category
 
 
-@category_router.patch("/{id}", response_model=CategoryBase)
+@category_router.patch("/{id}", response_model=CategoryBase, status_code=200)
 async def update_category(*, session: Session = Depends(get_session), id: uuid.UUID, category: CategoryCreate):
     db_category = session.get(Category, id)
     if not db_category:
