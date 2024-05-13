@@ -3,10 +3,11 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from auth.login import manager
 from db import engine
 from models.categories import Category, CategoryBase, CategoryCreate
 
-category_router = APIRouter(prefix="/categories", tags=["categories"])
+category_router = APIRouter(prefix="/categories", tags=["categories"], dependencies=[Depends(manager)])
 
 
 def get_session():

@@ -3,10 +3,11 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from auth.login import manager
 from db import engine
 from models.articles import Article, ArticleBase, ArticleCreate
 
-article_router = APIRouter(prefix="/articles", tags=["articles"])
+article_router = APIRouter(prefix="/articles", tags=["articles"], dependencies=[Depends(manager)])
 
 
 def get_session():
