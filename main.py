@@ -17,7 +17,7 @@ load_dotenv()
 app = FastAPI(
     title="Control Stock API",
     version="0.1",
-    description="API para ingreso y salidad de productos en un stock"
+    description="API para ingreso y salidad de productos en un stock!"
 )
 
 app.include_router(login_router, prefix="/api/v1")
