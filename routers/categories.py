@@ -3,11 +3,11 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from auth.login import manager
+# from auth.login import manager
 from db import engine
 from models.categories import Category, CategoryBase, CategoryCreate
 
-category_router = APIRouter(prefix="/categories", tags=["categories"], dependencies=[Depends(manager)])
+category_router = APIRouter(prefix="/categories", tags=["categories"])
 
 
 def get_session():
@@ -39,6 +39,7 @@ async def create_category(*, session: Session = Depends(get_session), category: 
 
 @category_router.patch("/{id}", response_model=CategoryBase, status_code=200)
 async def update_category(*, session: Session = Depends(get_session), id: uuid.UUID, category: CategoryCreate):
+    print(category.dict())
     db_category = session.get(Category, id)
     if not db_category:
         raise HTTPException(status_code=404, detail="Category not found")

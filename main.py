@@ -35,7 +35,7 @@ async def startup():
     SQLModel.metadata.create_all(engine)
 
     session = Session(engine)
-    user_exists = session.exec(select(User).where(User.username == "admin")).first()
+    user_exists = session.exec(select(User).where(User.username == os.getenv("ADMIN"))).first()
     if not user_exists:
         user = (User(username=os.getenv("ADMIN"), hashed_password=Hasher.get_password_hash(os.getenv("PWD_ADMIN"))))
         session.add(user)
