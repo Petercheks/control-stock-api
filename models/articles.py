@@ -42,6 +42,8 @@ class ArticleBase(SQLModel):
     category: Optional[CategoryBase] = None
     name: str
     units: int
+    image: str
+    description: str
     purchase_price: float
     sale_price: Optional[float] = None
     created_at: datetime
