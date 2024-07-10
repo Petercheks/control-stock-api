@@ -1,6 +1,7 @@
 import os
 
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, Session, select
 
 from db import engine
@@ -18,6 +19,19 @@ app = FastAPI(
     title="Control Stock API",
     version="0.1",
     description="API para ingreso y salidad de productos en un stock!"
+)
+
+origins = [
+    "http://localhost:8080",
+    "http://127.0.0.1:5500",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(login_router, prefix="/api/v1")
