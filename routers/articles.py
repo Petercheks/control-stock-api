@@ -7,7 +7,7 @@ from auth.login import manager
 from db import engine
 from models.articles import Article, ArticleBase, ArticleCreate
 
-article_router = APIRouter(prefix="/articles", tags=["articles"])
+article_router = APIRouter(prefix="/articles", tags=["articles"], dependencies=[Depends(manager)])
 
 
 def get_session():
@@ -16,9 +16,9 @@ def get_session():
 
 
 @article_router.get("/", response_model=list[ArticleBase], status_code=200)
-async def get_articles(*, session: Session = Depends(get_session), offset: int = 0, limit: int = 100, student: str = None):
+async def get_articles(*, session: Session = Depends(get_session), offset: int = 0, limit: int = 100):
     articles = session.exec(
-        select(Article).join(Article.category).offset(offset).limit(limit).where(Article.student == student)
+        select(Article).join(Article.category).offset(offset).limit(limit)
     ).all()
 
     articles_base = []
@@ -27,15 +27,13 @@ async def get_articles(*, session: Session = Depends(get_session), offset: int =
             id=article.id,
             name=article.name,
             units=article.units,
-            image=article.image,
-            description=article.description,
+            code=article.code,
             purchase_price=article.purchase_price,
             sale_price=article.sale_price,
             created_at=article.created_at,
             updated_at=article.updated_at,
             deleted_at=article.deleted_at,
             category=article.category.dict() if article.category else None,
-            student=article.student,
         )
         articles_base.append(article_base)
 
@@ -52,15 +50,13 @@ async def get_article(*, session: Session = Depends(get_session), id: uuid.UUID)
         id=article.id,
         name=article.name,
         units=article.units,
-        image=article.image,
-        description=article.description,
+        code=article.code,
         purchase_price=article.purchase_price,
         sale_price=article.sale_price,
         created_at=article.created_at,
         updated_at=article.updated_at,
         deleted_at=article.deleted_at,
         category=article.category.dict() if article.category else None,
-        student=article.student,
     )
 
     return article_base
@@ -76,8 +72,7 @@ async def create_article(*, session: Session = Depends(get_session), article: Ar
     article_base = ArticleBase(
         id=db_article.id,
         name=db_article.name,
-        image=db_article.image,
-        description=db_article.description,
+        code=article.code,
         units=db_article.units,
         purchase_price=db_article.purchase_price,
         sale_price=db_article.sale_price,
@@ -85,7 +80,6 @@ async def create_article(*, session: Session = Depends(get_session), article: Ar
         updated_at=db_article.updated_at,
         deleted_at=db_article.deleted_at,
         category=db_article.category.dict() if db_article.category else None,
-        student=db_article.student,
     )
 
     return article_base

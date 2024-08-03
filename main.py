@@ -21,10 +21,7 @@ app = FastAPI(
     description="API para ingreso y salidad de productos en un stock!"
 )
 
-origins = [
-    "http://localhost:8080",
-    "http://127.0.0.1:5500",
-]
+origins = os.getenv("ORIGINS").split(",")
 
 app.add_middleware(
     CORSMiddleware,
