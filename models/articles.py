@@ -10,7 +10,7 @@ from .categories import CategoryBase, Category
 class Article(SQLModel, table=True):
     __tablename__ = "articles"
 
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(default=uuid.UUID(), primary_key=True)
     name: str
     units: int
     code: str
