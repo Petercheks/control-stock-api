@@ -7,7 +7,7 @@ from auth.login import manager
 from db import engine
 from models.articles import Article, ArticleBase, ArticleCreate
 
-article_router = APIRouter(prefix="/articles", tags=["articles"], dependencies=[Depends(manager)])
+article_router = APIRouter(prefix="/articles", tags=["articles"])
 
 
 def get_session():

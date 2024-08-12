@@ -28,3 +28,7 @@ class CategoryBase(SQLModel):
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None
+
+
+class CategoryResponse(CategoryBase):
+    linked_products_count: int
