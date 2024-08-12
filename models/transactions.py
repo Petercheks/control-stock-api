@@ -22,7 +22,7 @@ class Transaction(SQLModel, table=True):
     id: uuid.UUID = Field(default=uuid.UUID(), primary_key=True)
     type: TypeTransaction = Field(Enum(TypeTransaction))
     amount: float
-    drescription: Optional[str] = None
+    description: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     deleted_at: Optional[datetime] = None
