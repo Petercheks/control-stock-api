@@ -9,7 +9,7 @@ from sqlmodel import Field, SQLModel, Relationship
 class Category(SQLModel, table=True):
     __tablename__ = "categories"
 
-    id: uuid.UUID = Field(default=uuid.UUID(), primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)

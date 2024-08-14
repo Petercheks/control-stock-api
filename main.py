@@ -8,6 +8,7 @@ from db import engine
 from models import *
 from routers.categories import category_router
 from routers.articles import article_router
+from routers.transactions import transaction_router
 from auth.login import login_router, manager
 from dotenv import load_dotenv
 from auth.hasher import Hasher
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(login_router, prefix="/api/v1")
 app.include_router(category_router, prefix="/api/v1")
 app.include_router(article_router, prefix="/api/v1")
+app.include_router(transaction_router, prefix="/api/v1")
 
 
 @app.get("/")
