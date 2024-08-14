@@ -4,9 +4,8 @@ from datetime import datetime
 from typing import Optional
 
 from enum import Enum
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field
 
-from models.articles import Article
 
 
 class TypeTransaction(str, Enum):
@@ -16,6 +15,7 @@ class TypeTransaction(str, Enum):
     ADVERTISMENTS_PAYMENT = "advertisments_payment"
     PACKINGS = "packings"
     OTHER = "other"
+    RETURNS = "returns"
 
 
 class Transaction(SQLModel, table=True):

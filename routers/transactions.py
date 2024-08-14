@@ -2,6 +2,7 @@ import uuid
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import update
 from sqlmodel import Session, select
 
 from auth.login import manager
@@ -121,6 +122,7 @@ def register_articles(transaction: Transaction, articles: List[dict], session: S
     for article in articles:
         article_id = article.get("id")
         article_units = article.get("units")
+
         transactions_articles.append(
             TransactionArticle(
                 id=uuid.uuid4(),
@@ -129,6 +131,21 @@ def register_articles(transaction: Transaction, articles: List[dict], session: S
                 units=article_units,
             )
         )
+
+        quantity = None
+        if transaction.type == TypeTransaction.SALES:
+            quantity = - article_units
+
+        if transaction.type in [TypeTransaction.MERCHANDISE_PURCHASE]:
+            quantity = article_units
+
+        if quantity:
+            session.exec(
+                update(Article)
+                .where(Article.id == article_id)
+            )
+            session.commit()
+
 
     session.add_all(transactions_articles)
     session.commit()
