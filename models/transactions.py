@@ -51,7 +51,7 @@ class TransactionResponse(SQLModel):
     type: TypeTransaction
     amount: float
     description: Optional[str] = None
-    articles: Optional[list[Article]] = None
+    articles: Optional[list[dict]] = None
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None

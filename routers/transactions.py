@@ -28,15 +28,41 @@ async def get_transactions(*, session: Session = Depends(get_session), offset: i
 
     transactions_ids = [str(transaction.id.hex) for transaction in transactions]
 
-    articles = session.exec(
-        select(Article)
+    articles_in_transactions = session.exec(
+        select(
+            Article.id,
+            Article.name,
+            TransactionArticle.units,
+            TransactionArticle.article_id,
+            TransactionArticle.transaction_id
+        )
         .join(TransactionArticle, Article.id == TransactionArticle.article_id)
         .where(TransactionArticle.transaction_id.in_(transactions_ids))
     ).all()
 
-    print(articles)
+    transactions_response = []
+    for transaction in transactions:
+        articles_transaction = []
+        for article in articles_in_transactions:
+            if transaction.id == article.transaction_id:
+                articles_transaction.append({
+                    "id": article.article_id,
+                    "name": article.name,
+                    "units": article.units
+                })
 
-    return transactions
+        transactions_response.append(TransactionResponse(
+            id=transaction.id,
+            type=transaction.type,
+            amount=transaction.amount,
+            description=transaction.description,
+            articles=articles_transaction,
+            created_at=transaction.created_at,
+            updated_at=transaction.updated_at,
+            deleted_at=transaction.deleted_at
+        ))
+
+    return transactions_response
 
 
 @transaction_router.get("/{id}", response_model=TransactionResponse, status_code=200)
@@ -45,22 +71,47 @@ async def get_transaction(*, session: Session = Depends(get_session), id: uuid.U
 
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    return transaction
+
+    articles_in_transaction = session.exec(
+        select(
+            Article.id,
+            Article.name,
+            TransactionArticle.units,
+            TransactionArticle.article_id,
+            TransactionArticle.transaction_id
+        )
+        .join(TransactionArticle, Article.id == TransactionArticle.article_id)
+        .where(TransactionArticle.transaction_id == transaction.id)
+    ).all()
+
+    return TransactionResponse(
+        id=transaction.id,
+        type=transaction.type,
+        amount=transaction.amount,
+        description=transaction.description,
+        articles=[
+            {"id": article.id, "name": article.name, "units": article.units} for article in articles_in_transaction
+        ],
+        created_at=transaction.created_at,
+        updated_at=transaction.updated_at,
+        deleted_at=transaction.deleted_at
+    )
 
 
 @transaction_router.post("/", response_model=TransactionResponse, status_code=201)
 async def create_transaction(*, session: Session = Depends(get_session), transaction: TransactionRequest):
     db_transaction = Transaction(**transaction.model_dump())
+    session.add(db_transaction)
+    session.commit()
+    session.refresh(db_transaction)
 
-    if db_transaction.type in [TypeTransaction.SALES, TypeTransaction.SALES, TypeTransaction.MERCHANDISE_PURCHASE]:
+    if db_transaction.type in [TypeTransaction.SALES, TypeTransaction.MERCHANDISE_PURCHASE]:
         if not transaction.articles:
             raise HTTPException(status_code=400, detail="The articles are required for this transaction")
 
         register_articles(db_transaction, transaction.articles, session)
 
-    session.add(db_transaction)
-    session.commit()
-    session.refresh(db_transaction)
+
     return db_transaction
 
 
@@ -81,15 +132,3 @@ def register_articles(transaction: Transaction, articles: List[dict], session: S
 
     session.add_all(transactions_articles)
     session.commit()
-
-
-@transaction_router.delete("/{id}")
-def delete_category(*, session: Session = Depends(get_session), id: uuid.UUID):
-    transaction = session.get(Transaction, id)
-
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-
-    session.delete(transaction)
-    session.commit()
-    return {"message": "Transaction deleted"}
