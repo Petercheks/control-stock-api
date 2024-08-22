@@ -8,6 +8,7 @@ from db import engine
 from models import *
 from routers.categories import category_router
 from routers.articles import article_router
+from routers.transaction_types import transaction_type_router
 from routers.transactions import transaction_router
 from auth.login import login_router, manager
 from dotenv import load_dotenv
@@ -36,6 +37,7 @@ app.include_router(login_router, prefix="/api/v1")
 app.include_router(category_router, prefix="/api/v1")
 app.include_router(article_router, prefix="/api/v1")
 app.include_router(transaction_router, prefix="/api/v1")
+app.include_router(transaction_type_router, prefix="/api/v1")
 
 
 @app.get("/")

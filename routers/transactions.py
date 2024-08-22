@@ -8,8 +8,8 @@ from sqlmodel import Session, select
 from auth.login import manager
 from db import engine
 from models.articles import Article
-from models.transactions import Transaction, TransactionRequest, TransactionResponse, TypeTransaction, \
-    TransactionArticle
+from models.transaction_types import TransactionType
+from models.transactions import Transaction, TransactionRequest, TransactionResponse, TransactionArticle
 
 transaction_router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -19,10 +19,15 @@ def get_session():
         yield session
 
 
+SALES = "venta"
+MERCHANDISE_PURCHASE = "compra-de-mercancia"
+
+
 @transaction_router.get("/", response_model=list[TransactionResponse], status_code=200)
 async def get_transactions(*, session: Session = Depends(get_session), offset: int = 0, limit: int = 100):
     transactions = session.exec(
         select(Transaction)
+        .join(Transaction.transaction_type)
         .offset(offset)
         .limit(limit)
     ).all()
@@ -54,7 +59,7 @@ async def get_transactions(*, session: Session = Depends(get_session), offset: i
 
         transactions_response.append(TransactionResponse(
             id=transaction.id,
-            type=transaction.type,
+            transaction_type=transaction.transaction_type.model_dump(),
             amount=transaction.amount,
             description=transaction.description,
             articles=articles_transaction,
@@ -68,7 +73,8 @@ async def get_transactions(*, session: Session = Depends(get_session), offset: i
 
 @transaction_router.get("/{id}", response_model=TransactionResponse, status_code=200)
 async def get_transaction(*, session: Session = Depends(get_session), id: uuid.UUID):
-    transaction = session.exec(select(Transaction).where(Transaction.id == id)).one_or_none()
+    transaction = session.exec(
+        select(Transaction).join(Transaction.transaction_type).where(Transaction.id == id)).one_or_none()
 
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
@@ -87,7 +93,7 @@ async def get_transaction(*, session: Session = Depends(get_session), id: uuid.U
 
     return TransactionResponse(
         id=transaction.id,
-        type=transaction.type,
+        transaction_type=transaction.transaction_type.model_dump(),
         amount=transaction.amount,
         description=transaction.description,
         articles=[
@@ -106,12 +112,16 @@ async def create_transaction(*, session: Session = Depends(get_session), transac
     session.commit()
     session.refresh(db_transaction)
 
-    if db_transaction.type in [TypeTransaction.SALES, TypeTransaction.MERCHANDISE_PURCHASE]:
+    types_with_products = session.exec(
+        select(TransactionType.id)
+        .where(TransactionType.name.in_([SALES, MERCHANDISE_PURCHASE]))
+    ).all()
+
+    if db_transaction.transaction_type_id in types_with_products:
         if not transaction.articles:
             raise HTTPException(status_code=400, detail="The articles are required for this transaction")
 
         register_articles(db_transaction, transaction.articles, session)
-
 
     return db_transaction
 
@@ -132,20 +142,24 @@ def register_articles(transaction: Transaction, articles: List[dict], session: S
             )
         )
 
+        transaction_type_sale_id = session.exec(select(TransactionType.id).where(TransactionType.name == SALES)).one()
+        transaction_type_sell_id = session.exec(
+            select(TransactionType.id).where(TransactionType.name == MERCHANDISE_PURCHASE)).one()
+
         quantity = None
-        if transaction.type == TypeTransaction.SALES:
+        if transaction.transaction_type_id == transaction_type_sale_id:
             quantity = - article_units
 
-        if transaction.type in [TypeTransaction.MERCHANDISE_PURCHASE]:
+        if transaction.transaction_type_id == transaction_type_sell_id:
             quantity = article_units
 
         if quantity:
             session.exec(
                 update(Article)
                 .where(Article.id == article_id)
+                .values(units=Article.units + quantity)
             )
             session.commit()
-
 
     session.add_all(transactions_articles)
     session.commit()

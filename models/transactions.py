@@ -3,31 +3,23 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from enum import Enum
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
-
-
-class TypeTransaction(str, Enum):
-    SALES = "sales"
-    MERCHANDISE_PURCHASE = "merchandise_purchase"
-    LOGISTCS_PAYMENT = "logistics_payment"
-    ADVERTISMENTS_PAYMENT = "advertisments_payment"
-    PACKINGS = "packings"
-    OTHER = "other"
-    RETURNS = "returns"
+from models.transaction_types import TransactionType, TransactionTypeResponse
 
 
 class Transaction(SQLModel, table=True):
     __tablename__ = "transactions"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    type: TypeTransaction
     amount: float
     description: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     deleted_at: Optional[datetime] = None
+
+    transaction_type_id: uuid.UUID | None = Field(default=None, foreign_key="transaction_types.id")
+    transaction_type: Optional[TransactionType] = Relationship(back_populates="transactions")
 
 
 class TransactionArticle(SQLModel, table=True):
@@ -40,7 +32,7 @@ class TransactionArticle(SQLModel, table=True):
 
 
 class TransactionRequest(SQLModel):
-    type: TypeTransaction
+    transaction_type_id: uuid.UUID
     amount: float
     description: Optional[str] = None
     articles: Optional[list] = None
@@ -48,7 +40,7 @@ class TransactionRequest(SQLModel):
 
 class TransactionResponse(SQLModel):
     id: uuid.UUID
-    type: TypeTransaction
+    transaction_type: TransactionTypeResponse
     amount: float
     description: Optional[str] = None
     articles: Optional[list[dict]] = None
